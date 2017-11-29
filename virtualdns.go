@@ -2,6 +2,8 @@ package cloudflare
 
 import (
 	"encoding/json"
+	"net/url"
+	"strconv"
 
 	"github.com/pkg/errors"
 )
@@ -27,7 +29,7 @@ type VirtualDNSResponse struct {
 // VirtualDNSListResponse represents an array of Virtual DNS responses.
 type VirtualDNSListResponse struct {
 	Response
-	Result []*VirtualDNS `json:"result"`
+	Result []VirtualDNS `json:"result"`
 }
 
 // CreateVirtualDNS creates a new Virtual DNS cluster.
@@ -40,7 +42,7 @@ func (api *API) CreateVirtualDNS(v *VirtualDNS) (*VirtualDNS, error) {
 	}
 
 	response := &VirtualDNSResponse{}
-	err = json.Unmarshal(res, &response)
+	err = json.Unmarshal(res, response)
 	if err != nil {
 		return nil, errors.Wrap(err, errUnmarshalError)
 	}
@@ -59,7 +61,7 @@ func (api *API) VirtualDNS(virtualDNSID string) (*VirtualDNS, error) {
 	}
 
 	response := &VirtualDNSResponse{}
-	err = json.Unmarshal(res, &response)
+	err = json.Unmarshal(res, response)
 	if err != nil {
 		return nil, errors.Wrap(err, errUnmarshalError)
 	}
@@ -70,8 +72,18 @@ func (api *API) VirtualDNS(virtualDNSID string) (*VirtualDNS, error) {
 // ListVirtualDNS lists the virtual DNS clusters associated with an account.
 //
 // API reference: https://api.cloudflare.com/#virtual-dns-users--get-virtual-dns-clusters
-func (api *API) ListVirtualDNS() ([]*VirtualDNS, error) {
-	res, err := api.makeRequest("GET", "/user/virtual_dns", nil)
+func (api *API) ListVirtualDNS(page int) (*VirtualDNSListResponse, error) {
+	v := url.Values{}
+	if page <= 0 {
+		page = 1
+	}
+
+	v.Set("page", strconv.Itoa(page))
+	v.Set("per_page", strconv.Itoa(100))
+	query := "?" + v.Encode()
+
+	uri := "/user/virtual_dns" + query
+	res, err := api.makeRequest("GET", uri, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, errMakeRequestError)
 	}
@@ -82,7 +94,7 @@ func (api *API) ListVirtualDNS() ([]*VirtualDNS, error) {
 		return nil, errors.Wrap(err, errUnmarshalError)
 	}
 
-	return response.Result, nil
+	return response, nil
 }
 
 // UpdateVirtualDNS updates a Virtual DNS cluster.
@@ -96,7 +108,7 @@ func (api *API) UpdateVirtualDNS(virtualDNSID string, vv VirtualDNS) error {
 	}
 
 	response := &VirtualDNSResponse{}
-	err = json.Unmarshal(res, &response)
+	err = json.Unmarshal(res, response)
 	if err != nil {
 		return errors.Wrap(err, errUnmarshalError)
 	}
@@ -116,7 +128,7 @@ func (api *API) DeleteVirtualDNS(virtualDNSID string) error {
 	}
 
 	response := &VirtualDNSResponse{}
-	err = json.Unmarshal(res, &response)
+	err = json.Unmarshal(res, response)
 	if err != nil {
 		return errors.Wrap(err, errUnmarshalError)
 	}

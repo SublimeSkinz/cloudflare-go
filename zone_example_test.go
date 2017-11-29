@@ -14,12 +14,12 @@ func ExampleAPI_ListZones_all() {
 	}
 
 	// Fetch a slice of all zones available to this account.
-	zones, err := api.ListZones()
+	zones, err := api.ListZones(1)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	for _, z := range zones {
+	for _, z := range zones.Result {
 		fmt.Println(z.Name)
 	}
 }
@@ -31,12 +31,12 @@ func ExampleAPI_ListZones_filter() {
 	}
 
 	// Fetch a slice of zones example.org and example.net.
-	zones, err := api.ListZones("example.org", "example.net")
+	zones, err := api.ListZones(1)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	for _, z := range zones {
+	for _, z := range zones.Result {
 		fmt.Println(z.Name)
 	}
 }
